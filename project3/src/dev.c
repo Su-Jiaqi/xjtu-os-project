@@ -7,6 +7,9 @@ FILE* g_dev = NULL;
 ofile_t g_ofile[MAX_OPEN] = {0};
 uint32_t g_cwd = 1;
 
+int  g_uid = 0;                 // 初始 root
+char g_user[MAX_USER_LEN] = "root";
+
 int dev_open(const char* path, const char* mode){
     if(g_dev) return FS_OK;
     g_dev = fopen(path, mode);

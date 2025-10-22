@@ -39,14 +39,31 @@ int fs_format(){
     dir_add(1, ".", FT_DIR, 1);
     dir_add(1, "..", FT_DIR, 1);
 
+    // 创建默认用户表
+    users_bootstrap();
     dev_close();
     return FS_OK;
 }
+
 int fs_mount(const char* img){
-    if(dev_open(img,"rb+")!=FS_OK) return FS_ERR;
+    if(dev_open(img, "rb+")!=FS_OK) return FS_ERR;
     if(dev_read_block(&g_sb, BLK_SUPER)!=FS_OK) return FS_ERR;
     if(g_sb.magic!=FS_MAGIC || g_sb.block_size!=BLOCK_SIZE) return FS_ERR;
     if(dev_read_block(&g_gd, BLK_GDESC)!=FS_OK) return FS_ERR;
-    g_cwd=g_sb.root_ino; memset(g_ofile,0,sizeof(g_ofile));
+    g_cwd = g_sb.root_ino;
+    memset(g_ofile,0,sizeof(g_ofile));
+
+    // 引导 .users（若不存在则创建 root:root:0）
+    users_bootstrap();
+
+    // 默认登录 root
+    // g_uid = 0; strncpy(g_user,"root",MAX_USER_LEN-1); g_user[MAX_USER_LEN-1]='\0';
+    // 尝试恢复上次会话；失败就保持 root
+    if(session_load()!=FS_OK){
+        g_uid = 0;
+        strncpy(g_user,"root",MAX_USER_LEN-1);
+        g_user[MAX_USER_LEN-1]='\0';
+    }
+    
     return FS_OK;
 }
